@@ -1,0 +1,13 @@
+name: slide_dungeon
+version: 0.1.0
+
+authors:
+  -  <>
+
+targets:
+  slide_dungeon:
+    main: src/slide_dungeon.cr
+
+crystal: 0.23.1
+
+license: MIT

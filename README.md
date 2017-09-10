@@ -1,27 +1,9 @@
-# slide_dungeon
+# Slide Dungeon
 
-TODO: Write a description here
+A WIP game written in Crystal.
 
-## Installation
+Plans:
 
-TODO: Write installation instructions here
-
-## Usage
-
-TODO: Write usage instructions here
-
-## Development
-
-TODO: Write development instructions here
-
-## Contributing
-
-1. Fork it ( https://github.com/[your-github-name]/slide_dungeon/fork )
-2. Create your feature branch (git checkout -b my-new-feature)
-3. Commit your changes (git commit -am 'Add some feature')
-4. Push to the branch (git push origin my-new-feature)
-5. Create a new Pull Request
-
-## Contributors
-
-- [[your-github-name]](https://github.com/[your-github-name])  - creator, maintainer
+[] Basic game mechanics
+[] Sprites and animations
+[] Game layout

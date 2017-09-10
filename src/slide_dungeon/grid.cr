@@ -10,6 +10,8 @@ module SlideDungeon
 
     @hero_coords : Tuple(Int32, Int32)
 
+    @spawn_time = 1
+
     # Get and set rows
     private def get_row(n : Int32)
       return @board[n]
@@ -95,15 +97,15 @@ module SlideDungeon
     end
 
     private def attack_hero
-      neighbours = [[0, -1], [0, 1], [-1, 0], [1, 0]]
-                     .map { |ls| [@hero_coords[0] + ls[0], @hero_coords[1] + ls[1]] }
-                     .select { |ls| 0 <= ls[0] < 4 && 0 <= ls[1] < 4}
-                     .map { |ls| @board[ls[0]][ls[1]] }
-      directions = [Direction::Right, Direction::Left, Direction::Down, Direction::Up]
+      neighbours = [{0, -1, Direction::Right}, {0, 1, Direction::Left},
+                    {-1, 0, Direction::Down}, {1, 0, Direction::Up}]
+                     .map { |ls| {@hero_coords[0] + ls[0], @hero_coords[1] + ls[1], ls[2]} }
+                     .select { |ls| 0 <= ls[0] < 4 && 0 <= ls[1] < 4 }
+                     .map { |ls| [@board[ls[0]][ls[1]], ls[2]] }
 
       (0...neighbours.size).each do |a|
-        enemy = neighbours[a]
-        direction = directions[a]
+        enemy = neighbours[a][0]
+        direction = neighbours[a][1]
 
         enemy.attack_enemy(@hero) if enemy.is_a?(Enemy) && enemy.direction == direction
       end
@@ -219,6 +221,7 @@ module SlideDungeon
             end
 
             col_items = new_col + items_left
+            col = col_items + col_nils
           else
             items_left = col_items[0...hero_index]
             new_col = col_items[hero_index...col_items.size]
@@ -241,14 +244,31 @@ module SlideDungeon
             end
 
             col_items = items_left + new_col
+            col = col_nils + col_items
           end
         end
 
-        col = dir == Direction::Up ? col_items + col_nils : col_nils + col_items
         @hero_coords = {find_hero(col), @hero_coords[1]} if a == @hero_coords[1]
 
         set_col(a, col)
       end
+    end
+
+    private def spawn_tile
+      return unless @spawn_time.zero?
+
+      rand_int = rand(10)
+
+      case rand_int
+      when 0
+        spawn_block
+      when 1, 2, 3
+        spawn_item
+      else
+        spawn_enemy
+      end
+
+      spawn_time = 3
     end
 
     # Slide the board in a certain direction
@@ -265,9 +285,8 @@ module SlideDungeon
       attack_enemies
       attack_hero
 
-      spawn_enemy
-      spawn_item
-      spawn_block
+      @spawn_time -= 1
+      spawn_tile
     end
   end
 end

@@ -132,61 +132,59 @@ module SlideDungeon
     private def slide_horizontal(dir : Direction)
       (0...4).each do |a|
         row = get_row(a)
-        row_items = row.reject { |b| b.nil? }
-        row_nils  = row.select { |b| b.nil? }
-        hero_index = row_items.index { |b| b.is_a?(Hero) }
+        row_items = row.reject(&.nil?)
+        row_nils  = [nil] * (row.size - row_items.size)
+        hero_index = row_items.index(&.is_a?(Hero))
 
         if !hero_index.nil?
           if dir == Direction::Left
             new_row = row_items[0...hero_index]
             items_left = row_items[hero_index...row_items.size]
 
-            while new_row.size > 1 && new_row[-2].is_a?(Item)
-              temp = new_row[-2]
-              temp.apply(@hero) if temp.is_a?(Item)
+            while new_row.size > 1 && (temp = new_row[-2]) && temp.is_a?(Item)
+              temp.apply(@hero)
               new_row.delete_at(-2)
               row_nils.push(nil)
             end
 
-            if new_row.size > 1 && new_row[-2].is_a?(Block)
-              temp = new_row[-2]
-              temp.durability -= 1 if temp.is_a?(Block)
+            while new_row.size > 1 && (temp = new_row[-2]) && temp.is_a?(Block)
+              temp.durability -= 1
               
-              if temp.is_a?(Block) && temp.durability.zero?
+              if temp.durability.zero?
                 new_row.delete_at(-2)
                 row_nils.push(nil)
+              else
+                break
               end
             end
 
-            row_items = new_row + items_left
+            row = new_row + items_left + row_nils
           else
             items_left = row_items[0...hero_index]
             new_row = row_items[hero_index...row_items.size]
 
-            while new_row.size > 1 && new_row[1].is_a?(Item)
-              temp = new_row[1]
-              temp.apply(@hero) if temp.is_a?(Item)
+            while new_row.size > 1 && (temp = new_row[1]) && temp.is_a?(Item)
+              temp.apply(@hero)
               new_row.delete_at(1)
               row_nils.push(nil)
             end
 
-            if new_row.size > 1 && new_row[1].is_a?(Block)
-              temp = new_row[1]
-              temp.durability -= 1 if temp.is_a?(Block)
+            while new_row.size > 1 && (temp = new_row[1]) && temp.is_a?(Block)
+              temp.durability -= 1
               
-              if temp.is_a?(Block) && temp.durability.zero?
+              if temp.durability.zero?
                 new_row.delete_at(1)
                 row_nils.push(nil)
+              else
+                break
               end
             end
 
-            row_items = items_left + new_row
+            row = row_nils + items_left + new_row
           end
         end
 
-        row = dir == Direction::Left ? row_items + row_nils : row_nils + row_items
         @hero_coords = {@hero_coords[0], find_hero(row)} if a == @hero_coords[0]
-
         set_row(a, row)
       end
     end
@@ -194,52 +192,51 @@ module SlideDungeon
     private def slide_vertical(dir : Direction)
       (0...4).each do |a|
         col = get_col(a)
-        col_items = col.reject { |b| b.nil? }
-        col_nils  = col.select { |b| b.nil? }
-        hero_index = col_items.index { |b| b.is_a?(Hero) }
+        col_items = col.reject(&.nil?)
+        col_nils  = [nil] * (col.size - col_items.size)
+        hero_index = col_items.index(&.is_a?(Hero))
 
         if !hero_index.nil?
           if dir == Direction::Up
             new_col = col_items[0...hero_index]
             items_left = col_items[hero_index...col_items.size]
 
-            while new_col.size > 1 && new_col[-2].is_a?(Item)
-              temp = new_col[-2]
-              temp.apply(@hero) if temp.is_a?(Item)
+            while new_col.size > 1 && (temp = new_col[-2]) && temp.is_a?(Item)
+              temp.apply(@hero)
               new_col.delete_at(-2)
               col_nils.push(nil)
             end
 
-            if new_col.size > 1 && new_col[-2].is_a?(Block)
-              temp = new_col[-2]
-              temp.durability -= 1 if temp.is_a?(Block)
+            while new_col.size > 1 && (temp = new_col[-2]) && temp.is_a?(Block)
+              temp.durability -= 1
               
-              if temp.is_a?(Block) && temp.durability.zero?
+              if temp.durability.zero?
                 new_col.delete_at(-2)
                 col_nils.push(nil)
+              else
+                break
               end
             end
 
-            col_items = new_col + items_left
-            col = col_items + col_nils
+            col = new_col + items_left + col_nils
           else
             items_left = col_items[0...hero_index]
             new_col = col_items[hero_index...col_items.size]
 
-            while new_col.size > 1 && new_col[1].is_a?(Item)
-              temp = new_col[1]
-              temp.apply(@hero) if temp.is_a?(Item)
+            while new_col.size > 1 && (temp = new_col[1]) && temp.is_a?(Item)
+              temp.apply(@hero)
               new_col.delete_at(1)
               col_nils.push(nil)
             end
 
-            if new_col.size > 1 && new_col[1].is_a?(Block)
-              temp = new_col[1]
-              temp.durability -= 1 if temp.is_a?(Block)
+            while new_col.size > 1 && (temp = new_col[1]) && temp.is_a?(Block)
+              temp.durability -= 1
               
-              if temp.is_a?(Block) && temp.durability.zero?
+              if temp.durability.zero?
                 new_col.delete_at(1)
                 col_nils.push(nil)
+              else
+                break
               end
             end
 
@@ -249,7 +246,6 @@ module SlideDungeon
         end
 
         @hero_coords = {find_hero(col), @hero_coords[1]} if a == @hero_coords[1]
-
         set_col(a, col)
       end
     end

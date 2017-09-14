@@ -4,8 +4,8 @@ A WIP game written in Crystal.
 
 Plans:
 
-[] Basic game mechanics
+[_] Basic game mechanics
 
-[] Sprites and animations
+[_] Sprites and animations
 
-[] Game layout
+[_] Game layout

@@ -2,10 +2,11 @@ require "./direction.cr"
 
 module SlideDungeon
   class Entity
-    property :attack, :health, :direction, :coords
+    property :attack, :defense, :health, :direction, :coords
 
-    @attack : Int32
-    @health : Int32
+    @attack  : Int32
+    @defense : Int32
+    @health  : Int32
     @direction : Direction
 
     # Set a random direction for the entity
@@ -16,13 +17,30 @@ module SlideDungeon
     end
 
     # Initialise entity class
-    def initialize(@attack, @health)
+    def initialize(@attack, @defense, @health)
       @direction = random_dir
+    end
+
+    # Calculate chances of an attack being "blocked"
+    def blocked? : Bool
+      return false if @defense.zero?
+
+      base = 1 + 5.0 / (@defense + 5.0)
+      exp = (@defense + 5.0) / 5.0
+      percentage = (base ** exp - 2) / (Math::E - 2)
+      puts percentage
+
+      rand_float = rand()
+      return rand_float > percentage
     end
 
     # Attack another entity
     def attack_enemy(enemy : Entity)
-      enemy.health -= @attack
+      if enemy.blocked?
+        enemy.defense -= 1
+      else
+        enemy.health -= @attack
+      end
     end
   end
 
@@ -31,7 +49,7 @@ module SlideDungeon
     @max_health : Int32
 
     def initialize
-      super 1, 10
+      super 1, 1, 10
       @max_health = 10
     end
   end

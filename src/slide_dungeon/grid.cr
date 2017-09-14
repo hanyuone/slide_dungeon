@@ -3,7 +3,7 @@ require "./tile/*"
 module SlideDungeon
   class Grid
     alias Tile = Entity | Item | Block | Nil
-    getter :board, :hero_coords
+    getter :board, :hero, :hero_coords
 
     @board : Array(Array(Tile))
     @hero  : Hero
@@ -126,12 +126,12 @@ module SlideDungeon
 
     # Spawns an enemy
     private def spawn_enemy
-      place_item(Enemy.new(1, 5))
+      place_item(Enemy.new(1, 0, 5))
     end
 
     # Spawns an item
     private def spawn_item
-      item_types = [HealthPotion.new, Sword.new]
+      item_types = [HealthPotion.new, Sword.new, Shield.new]
       rand_item = item_types[rand(item_types.size)]
 
       place_item(rand_item)

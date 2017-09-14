@@ -34,4 +34,15 @@ module SlideDungeon
       super name, fn
     end
   end
+
+  class Shield < Item
+    def initialize
+      name = "Shield"
+      fn = ->(hero : Hero) {
+        hero.defense += 1
+      }
+
+      super name, fn
+    end
+  end
 end

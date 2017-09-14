@@ -1,9 +1,10 @@
 module SlideDungeon
   class Item
-    getter :fn
+    getter :name, :fn
+    @name : String
     @fn : Proc(Hero, Void)
 
-    def initialize(@fn)
+    def initialize(@name, @fn)
     end
 
     def apply(hero : Hero)
@@ -13,22 +14,24 @@ module SlideDungeon
 
   class HealthPotion < Item
     def initialize
+      name = "Health Potion"
       fn = ->(hero : Hero) {
         hero.health += 5
         hero.health = hero.max_health if hero.health > hero.max_health
       }
 
-      super fn
+      super name, fn
     end
   end
 
   class Sword < Item
     def initialize
+      name = "Sword"
       fn = ->(hero : Hero) {
         hero.attack += 1
       }
 
-      super fn
+      super name, fn
     end
   end
 end

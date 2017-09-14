@@ -3,8 +3,8 @@ require "./tile/*"
 module SlideDungeon
   class Grid
     alias Tile = Entity | Item | Block | Nil
-
     getter :board, :hero_coords
+
     @board : Array(Array(Tile))
     @hero  : Hero
 
@@ -33,7 +33,7 @@ module SlideDungeon
     end
 
     # Place an item down
-    private def place_item(item : Tile)
+    private def place_item(item : Tile, hero? : Bool = false)
       empty_tiles = [] of Tuple(Int32, Int32)
 
       (0...4).each do |a|
@@ -44,7 +44,7 @@ module SlideDungeon
 
       rand_coords = empty_tiles.sample(1)[0]
       @board[rand_coords[0]][rand_coords[1]] = item
-      @hero_coords = rand_coords if item.is_a?(Hero)
+      @hero_coords = rand_coords if hero?
     end
 
     # Initialise board
@@ -54,7 +54,7 @@ module SlideDungeon
         4.times { @board[-1].push(nil) }
       end
 
-      place_item(@hero)
+      place_item(@hero, true)
     end
 
     # Initialise method
@@ -66,6 +66,7 @@ module SlideDungeon
       init_board
     end
 
+    # Find the hero in a row
     private def find_hero(row : Array(Tile)) : Int32
       (0...row.size).each do |a|
         return a if row[a].is_a?(Hero)
@@ -74,6 +75,7 @@ module SlideDungeon
       return -1
     end
 
+    # Attack all enemies in the hero's direction
     private def attack_enemies
       enemies = case @hero.direction
                 when Direction::Left
@@ -91,7 +93,18 @@ module SlideDungeon
         
         if enemy.is_a?(Enemy)
           @hero.attack_enemy(enemy)
-          enemy.face(@hero_coords, coords)
+          if enemy.health <= 0
+            @board[coords[0]][coords[1]] = nil
+
+            case @hero.direction
+              when Direction::Left, Direction::Right
+                slide_horizontal(@hero.direction)
+              when Direction::Up, Direction::Down
+                slide_vertical(@hero.direction)
+            end
+          else
+            enemy.face(@hero_coords, coords)
+          end
         end
       end
     end
@@ -129,6 +142,7 @@ module SlideDungeon
       place_item(Block.new(3))
     end
 
+    # Slide the board horizontally
     private def slide_horizontal(dir : Direction)
       (0...4).each do |a|
         row = get_row(a)
@@ -138,8 +152,8 @@ module SlideDungeon
 
         if !hero_index.nil?
           if dir == Direction::Left
-            new_row = row_items[0...hero_index]
-            items_left = row_items[hero_index...row_items.size]
+            new_row = row_items[0...(hero_index + 1)]
+            items_left = row_items[(hero_index + 1)...row_items.size]
 
             while new_row.size > 1 && (temp = new_row[-2]) && temp.is_a?(Item)
               temp.apply(@hero)
@@ -158,7 +172,7 @@ module SlideDungeon
               end
             end
 
-            row = new_row + items_left + row_nils
+            row_items = new_row + items_left
           else
             items_left = row_items[0...hero_index]
             new_row = row_items[hero_index...row_items.size]
@@ -180,8 +194,14 @@ module SlideDungeon
               end
             end
 
-            row = row_nils + items_left + new_row
+            row_items = items_left + new_row
           end
+        end
+
+        if dir == Direction::Left
+          row = row_items + row_nils
+        else
+          row = row_nils + row_items
         end
 
         @hero_coords = {@hero_coords[0], find_hero(row)} if a == @hero_coords[0]
@@ -198,8 +218,8 @@ module SlideDungeon
 
         if !hero_index.nil?
           if dir == Direction::Up
-            new_col = col_items[0...hero_index]
-            items_left = col_items[hero_index...col_items.size]
+            new_col = col_items[0...(hero_index + 1)]
+            items_left = col_items[(hero_index + 1)...col_items.size]
 
             while new_col.size > 1 && (temp = new_col[-2]) && temp.is_a?(Item)
               temp.apply(@hero)
@@ -218,7 +238,7 @@ module SlideDungeon
               end
             end
 
-            col = new_col + items_left + col_nils
+            col_items = new_col + items_left
           else
             items_left = col_items[0...hero_index]
             new_col = col_items[hero_index...col_items.size]
@@ -241,8 +261,13 @@ module SlideDungeon
             end
 
             col_items = items_left + new_col
-            col = col_nils + col_items
           end
+        end
+
+        if dir == Direction::Up
+          col = col_items + col_nils
+        else
+          col = col_nils + col_items
         end
 
         @hero_coords = {find_hero(col), @hero_coords[1]} if a == @hero_coords[1]
@@ -256,15 +281,15 @@ module SlideDungeon
       rand_int = rand(10)
 
       case rand_int
-      when 0
-        spawn_block
-      when 1, 2, 3
-        spawn_item
-      else
-        spawn_enemy
+        when 0
+          spawn_block
+        when 1, 2, 3
+          spawn_item
+        else
+          spawn_enemy
       end
 
-      spawn_time = 3
+      @spawn_time = 5
     end
 
     # Slide the board in a certain direction
@@ -272,10 +297,10 @@ module SlideDungeon
       @hero.direction = dir
 
       case dir
-      when Direction::Left, Direction::Right
-        slide_horizontal(dir)
-      when Direction::Up, Direction::Down
-        slide_vertical(dir)
+        when Direction::Left, Direction::Right
+          slide_horizontal(dir)
+        when Direction::Up, Direction::Down
+          slide_vertical(dir)
       end
 
       attack_enemies

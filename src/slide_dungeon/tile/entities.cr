@@ -28,7 +28,6 @@ module SlideDungeon
       base = 1 + 5.0 / (@defense + 5.0)
       exp = (@defense + 5.0) / 5.0
       percentage = (base ** exp - 2) / (Math::E - 2)
-      puts percentage
 
       rand_float = rand()
       return rand_float > percentage

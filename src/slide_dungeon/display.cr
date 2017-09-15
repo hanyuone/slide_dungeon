@@ -1,11 +1,11 @@
 require "crsfml"
 
-require "./grid.cr"
+require "./game_grid.cr"
 require "./tile/direction.cr"
 
 module SlideDungeon
   class Window
-    @grid : Grid
+    @grid : GameGrid
     @window : SF::RenderWindow
     @font : SF::Font
 
@@ -131,7 +131,7 @@ module SlideDungeon
     end
 
     def initialize
-      @grid = Grid.new
+      @grid = GameGrid.new
       @window = SF::RenderWindow.new(SF::VideoMode.new(800, 600), "Slide Dungeon")
       @font = SF::Font.from_file("resources/FiraCode-Regular.ttf")
 

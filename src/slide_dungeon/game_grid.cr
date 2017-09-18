@@ -4,11 +4,12 @@ require "./grid.cr"
 module SlideDungeon
   class GameGrid
     alias Tile = Entity | Item | Block
-    getter :board, :hero, :hero_coords
+    getter :board, :hero, :inventory, :hero_coords
 
     @board : Grid(Tile)
     @hero  : Hero
 
+    @inventory : Array(Item)
     @hero_coords : Tuple(Int32, Int32)
 
     @spawn_time = 1
@@ -28,6 +29,8 @@ module SlideDungeon
     def initialize
       @board = Grid(Tile).new
       @hero  = Hero.new
+
+      @inventory = [] of Item
       @hero_coords = {-1, -1}
 
       init_board
@@ -45,14 +48,14 @@ module SlideDungeon
     # Attack all enemies in the hero's direction
     private def attack_enemies
       enemies = case @hero.direction
-                when Direction::Left
-                  (0...@hero_coords[1]).map { |a| {@hero_coords[0], a} }
-                when Direction::Right
-                  (@hero_coords[1]...4).map { |a| {@hero_coords[0], a} }
-                when Direction::Up
-                  (0...@hero_coords[0]).map { |a| {a, @hero_coords[1]} }
-                when Direction::Down
-                  (@hero_coords[0]...4).map { |a| {a, @hero_coords[1]} }
+                  when Direction::Left
+                    (0...@hero_coords[1]).map { |a| {@hero_coords[0], a} }
+                  when Direction::Right
+                    (@hero_coords[1]...4).map { |a| {@hero_coords[0], a} }
+                  when Direction::Up
+                    (0...@hero_coords[0]).map { |a| {a, @hero_coords[1]} }
+                  when Direction::Down
+                    (@hero_coords[0]...4).map { |a| {a, @hero_coords[1]} }
                 end.not_nil!.select { |b| @board[b[0]][b[1]].is_a?(Enemy) }
 
       enemies.each do |coords|
@@ -76,12 +79,14 @@ module SlideDungeon
       end
     end
 
+    # Function to let enemies attack the hero.
     private def attack_hero
-      neighbours = [{0, -1, Direction::Right}, {0, 1, Direction::Left},
-                    {-1, 0, Direction::Down}, {1, 0, Direction::Up}]
-                     .map { |ls| {@hero_coords[0] + ls[0], @hero_coords[1] + ls[1], ls[2]} }
-                     .select { |ls| 0 <= ls[0] < 4 && 0 <= ls[1] < 4 }
-                     .map { |ls| [@board[ls[0]][ls[1]], ls[2]] }
+      neighbours = [
+        {0, -1, Direction::Right}, {0, 1, Direction::Left},
+        {-1, 0, Direction::Down}, {1, 0, Direction::Up}
+      ].map { |ls| {@hero_coords[0] + ls[0], @hero_coords[1] + ls[1], ls[2]} }
+       .select { |ls| 0 <= ls[0] < 4 && 0 <= ls[1] < 4 }
+       .map { |ls| [@board[ls[0]][ls[1]], ls[2]] }
 
       (0...neighbours.size).each do |a|
         enemy = neighbours[a][0]
@@ -109,6 +114,14 @@ module SlideDungeon
       place_item(Block.new(3))
     end
 
+    private def to_inventory(item : Item)
+      if item.in_inv
+        @inventory.push(item) if @inventory.size < 3
+      else
+        item.apply(@hero)
+      end
+    end
+
     # Slide the board horizontally
     private def slide_horizontal(dir : Direction)
       (0...4).each do |a|
@@ -123,7 +136,7 @@ module SlideDungeon
             items_left = row_items[(hero_index + 1)...row_items.size]
 
             while new_row.size > 1 && (temp = new_row[-2]) && temp.is_a?(Item)
-              temp.apply(@hero)
+              to_inventory(temp)
               new_row.delete_at(-2)
               row_nils.push(nil)
             end
@@ -145,7 +158,7 @@ module SlideDungeon
             new_row = row_items[hero_index...row_items.size]
 
             while new_row.size > 1 && (temp = new_row[1]) && temp.is_a?(Item)
-              temp.apply(@hero)
+              to_inventory(temp)
               new_row.delete_at(1)
               row_nils.push(nil)
             end
@@ -189,7 +202,7 @@ module SlideDungeon
             items_left = col_items[(hero_index + 1)...col_items.size]
 
             while new_col.size > 1 && (temp = new_col[-2]) && temp.is_a?(Item)
-              temp.apply(@hero)
+              to_inventory(temp)
               new_col.delete_at(-2)
               col_nils.push(nil)
             end
@@ -211,7 +224,7 @@ module SlideDungeon
             new_col = col_items[hero_index...col_items.size]
 
             while new_col.size > 1 && (temp = new_col[1]) && temp.is_a?(Item)
-              temp.apply(@hero)
+              to_inventory(temp)
               new_col.delete_at(1)
               col_nils.push(nil)
             end
@@ -255,10 +268,10 @@ module SlideDungeon
         next unless filtered_row.size == current_row.size
 
         enemy_health = filtered_row.map(&.health)
-                                   .reduce(&.+)
+                                   .reduce { |a, b| a + b }
         enemy_attack = filtered_row.map(&.attack)
                                    .sort[-2..-1]
-                                   .reduce(&.+)
+                                   .reduce { |a, b| a + b }
         enemy_defense = filtered_row.map(&.defense)
                                     .reduce { |a, b| [a, b].max }
         
@@ -340,6 +353,14 @@ module SlideDungeon
 
       @spawn_time -= 1
       spawn_tile
+    end
+
+    # Use an item from the inventory
+    def use_item(n : Int32)
+      if n < @inventory.size
+        @inventory[n].apply(@hero)
+        @inventory.delete_at(n)
+      end
     end
   end
 end

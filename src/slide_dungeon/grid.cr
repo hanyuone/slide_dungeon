@@ -22,6 +22,7 @@ module SlideDungeon
       end
     end
 
+    # Initialise grid.
     private def init_grid
       (0...4).each do |x|
         @grid.push([] of T?)

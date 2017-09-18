@@ -19,8 +19,8 @@ module SlideDungeon
       @paused = false
     end
 
-    private def slide_grid(event : SF::Event)
-      case event.code
+    private def slide_grid(event : SF::Keyboard::Key)
+      case event
         when SF::Keyboard::Left
           @grid.slide(Direction::Left)
         when SF::Keyboard::Right
@@ -29,6 +29,17 @@ module SlideDungeon
           @grid.slide(Direction::Up)
         when SF::Keyboard::Down
           @grid.slide(Direction::Down)
+      end
+    end
+
+    private def select_item(event : SF::Keyboard::Key)
+      case event
+        when SF::Keyboard::Num1
+          @grid.use_item(0)
+        when SF::Keyboard::Num2
+          @grid.use_item(1)
+        when SF::Keyboard::Num3
+          @grid.use_item(2)
       end
     end
 
@@ -79,10 +90,29 @@ module SlideDungeon
       defense_text.font = @font
       defense_text.string = "DEF: #{@grid.hero.defense}"
 
-      attack_text.position = {600, 100}
-      defense_text.position = {600, 150}
+      stat_one = SF::Text.new
+      stat_one.font = @font
+      stat_one.string = "INV 1: #{@grid.inventory.size > 0 ? @grid.inventory[0].name : "None"}"
+
+      stat_two = SF::Text.new
+      stat_two.font = @font
+      stat_two.string = "INV 2: #{@grid.inventory.size > 1 ? @grid.inventory[1].name : "None"}"
+
+      stat_three = SF::Text.new
+      stat_three.font = @font
+      stat_three.string = "INV 3: #{@grid.inventory.size > 2 ? @grid.inventory[2].name : "None"}"
+
+      attack_text.position = {550, 100}
+      defense_text.position = {550, 150}
+      stat_one.position = {550, 200}
+      stat_two.position = {550, 250}
+      stat_three.position = {550, 300}
+
       @window.draw(attack_text)
       @window.draw(defense_text)
+      @window.draw(stat_one)
+      @window.draw(stat_two)
+      @window.draw(stat_three)
     end
 
     private def draw_pause_bars
@@ -109,8 +139,17 @@ module SlideDungeon
             when SF::Event::GainedFocus
               resume
             when SF::Event::KeyPressed
-              slide_grid(event)
+              case event.code
+                when SF::Keyboard::Up, SF::Keyboard::Down, SF::Keyboard::Left, SF::Keyboard::Right
+                  slide_grid(event.code)
+                when SF::Keyboard::Num1, SF::Keyboard::Num2, SF::Keyboard::Num3
+                  select_item(event.code)
+              end
           end
+        end
+
+        if @grid.hero.health <= 0
+          return
         end
 
         @window.clear(SF::Color::Black)
